@@ -54,31 +54,42 @@ def start(config):
         for output_channel in output_channel_entities:
             message = getattr(event.message, 'message').lower()
 
+            print(message)
+
             currency_pair_pattern = r"([A-Z]{3}/[A-Z]{3})"
             currency_pair_match = re.search(currency_pair_pattern, message)
 
             # Initialize the response message
             res = ""
 
-            # Process messages containing 'closed' or 'cancelled'
-            # and format the response accordingly
-            if 'closed' in message or 'cancelled' in message:
-                res = f"rfc close {currency_pair_match.group()}"
-            
-            # Process messages containing 'move sl'
-            # and format the response accordingly
-            if 'move sl' in message:
-                res = f"rfc sl entry {currency_pair_match.group()}"
-            
-            # Process messages containing 'potential downward/upward movement'
-            # Replace 'Target' with 'Take' in the response message
-            if ('potential downward movement' in message or 'potential upward movement' in message) and 'trade safely' in message:
-                res = message.replace('target', 'take')
+            # Ensure there is a match before processing
+            if currency_pair_match:
+                # Process messages containing 'closed' or 'cancelled'
+                # and format the response accordingly
+                if 'closed' in message or 'cancelled' in message:
+                    res = f"rfc close {currency_pair_match.group()}"
                 
+                # Process messages containing 'move sl'
+                # and format the response accordingly
+                if 'move sl' in message or 'stop loss moved' in message:
+                    res = f"rfc sl entry {currency_pair_match.group()}"
+                
+                # Process messages containing 'potential downward/upward movement'
+                # Replace 'Target' with 'Take' in the response message
+                if ('potential downward movement' in message or 'potential upward movement' in message) and 'trade safely' in message:
+                    print("Function is triggered for opening order")
+                    res = message.replace('target', 'take')
+                    print(res)
+                else:
+                    print("Function did not trigger for opening order")
+
             # Send the formatted response message to the output channel
             # Convert the message to uppercase before sending
+            print(res)
+
             if res:
                 await client.send_message(output_channel, message=res.upper())
+
                     
     # Run the client until disconnected
     client.run_until_disconnected()
